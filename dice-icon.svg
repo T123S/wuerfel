@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <!-- Hintergrund (Teal passend zur App) -->
+  <rect x="10" y="10" width="80" height="80" rx="20" fill="#0d9488" />
+  
+  <!-- Würfelaugen (6 Stück, weiß) -->
+  <circle cx="30" cy="30" r="8" fill="white" />
+  <circle cx="30" cy="50" r="8" fill="white" />
+  <circle cx="30" cy="70" r="8" fill="white" />
+  
+  <circle cx="70" cy="30" r="8" fill="white" />
+  <circle cx="70" cy="50" r="8" fill="white" />
+  <circle cx="70" cy="70" r="8" fill="white" />
+</svg>

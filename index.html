@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- Verweis auf das SVG-Icon -->
+    <link rel="icon" type="image/svg+xml" href="./dice-icon.svg" />
+    <link rel="apple-touch-icon" href="./dice-icon.svg" />
+    
+    <!-- Verweis auf das Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d9488" />
+    
+    <title>Würfel App</title>
+
+    <!-- Tailwind CSS laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              'spin-slow': 'spin 3s linear infinite',
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-slate-100 font-sans text-slate-800">
+    
+    <div class="min-h-screen flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+        
+        <!-- Header -->
+        <div class="bg-teal-600 p-6 text-white flex justify-between items-center rounded-b-3xl shadow-md z-10 relative">
+          <div class="flex items-center gap-3">
+            <svg id="header-dice-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/>
+            </svg>
+            <h1 class="text-2xl font-bold tracking-tight">Würfel App</h1>
+          </div>
+          <button id="settings-btn" class="p-2 hover:bg-teal-500 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white" aria-label="Einstellungen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Einstellungs-Bereich -->
+        <div id="settings-panel" class="transition-all duration-300 ease-in-out bg-slate-50 border-b border-slate-200 overflow-hidden max-h-0 opacity-0">
+          <div class="p-6 space-y-5">
+            
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-700">Anzahl der Würfel</span>
+              <select id="num-dice" class="bg-white border border-slate-300 text-slate-700 rounded-lg focus:ring-teal-500 focus:border-teal-500 block p-2 font-bold shadow-sm outline-none cursor-pointer min-w-[80px]">
+                <!-- Wird per JS gefüllt -->
+              </select>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-700">Augenzahl (Seiten)</span>
+              <select id="num-sides" class="bg-white border border-slate-300 text-slate-700 rounded-lg focus:ring-teal-500 focus:border-teal-500 block p-2 font-bold shadow-sm outline-none cursor-pointer min-w-[80px]">
+                <!-- Wird per JS gefüllt -->
+              </select>
+            </div>
+            
+            <div class="text-xs text-slate-400 text-center pt-3 border-t border-slate-200 mt-2">
+              Version 1.1.0
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Hauptbereich: Würfel Anzeige -->
+        <div class="p-8 min-h-[250px] flex flex-col items-center justify-center">
+          <div id="dice-container" class="flex flex-wrap justify-center gap-4 mb-8">
+            <!-- Würfel werden hier eingefügt -->
+          </div>
+
+          <!-- Summen-Anzeige -->
+          <div id="sum-container" class="text-center mb-4 transition-opacity duration-300 hidden">
+            <span class="text-slate-500 text-sm font-semibold uppercase tracking-wider">Summe</span>
+            <div id="total-sum" class="text-3xl font-bold text-slate-800">
+              1
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer / Aktions-Button -->
+        <div class="p-6 bg-slate-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] border-t border-slate-200">
+          <button id="roll-button" class="w-full py-4 rounded-xl flex items-center justify-center gap-3 text-xl font-bold text-white shadow-lg transition-all bg-teal-600 hover:bg-teal-700 hover:shadow-teal-300/50 hover:-translate-y-1 active:translate-y-0 active:scale-95">
+            <svg id="roll-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+            </svg>
+            <span id="roll-text">Würfeln</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- App Logik -->
+    <script>
+      // State
+      let numDice = 1;
+      let numSides = 6;
+      let rolls = [1];
+      let isRolling = false;
+      let showSettings = false;
+
+      // DOM Elemente
+      const settingsBtn = document.getElementById('settings-btn');
+      const settingsPanel = document.getElementById('settings-panel');
+      const numDiceSelect = document.getElementById('num-dice');
+      const numSidesSelect = document.getElementById('num-sides');
+      const diceContainer = document.getElementById('dice-container');
+      const sumContainer = document.getElementById('sum-container');
+      const totalSumDisplay = document.getElementById('total-sum');
+      const rollButton = document.getElementById('roll-button');
+      const rollIcon = document.getElementById('roll-icon');
+      const rollText = document.getElementById('roll-text');
+      const headerDiceIcon = document.getElementById('header-dice-icon');
+
+      // Dropdowns initialisieren
+      numDiceSelect.innerHTML = Array.from({length: 9}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('');
+      numSidesSelect.innerHTML = Array.from({length: 19}, (_, i) => `<option value="${i+2}">${i+2}</option>`).join('');
+      numSidesSelect.value = "6";
+
+      // Würfel-Render Logik
+      function renderDiceFace(value, sides, rolling) {
+        if (sides === 6) {
+          const pips = {
+            1: [4],
+            2: [0, 8],
+            3: [0, 4, 8],
+            4: [0, 2, 6, 8],
+            5: [0, 2, 4, 6, 8],
+            6: [0, 2, 3, 5, 6, 8]
+          };
+          const activePips = pips[value] || [];
+          let gridHTML = '<div class="grid grid-cols-3 grid-rows-3 gap-1 p-2 w-full h-full place-items-center">';
+          for(let i=0; i<9; i++) {
+            const isActive = activePips.includes(i);
+            const colorClass = isActive ? (rolling ? 'bg-slate-300' : 'bg-teal-600') : 'bg-transparent';
+            gridHTML += `<div class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-colors ${colorClass}"></div>`;
+          }
+          gridHTML += '</div>';
+          return gridHTML;
+        }
+        return value;
+      }
+
+      // UI Aktualisieren
+      function updateUI() {
+        // Einstellungen anzeigen/verstecken
+        if (showSettings) {
+          settingsPanel.classList.remove('max-h-0', 'opacity-0');
+          settingsPanel.classList.add('max-h-64', 'opacity-100');
+        } else {
+          settingsPanel.classList.remove('max-h-64', 'opacity-100');
+          settingsPanel.classList.add('max-h-0', 'opacity-0');
+        }
+
+        // Würfel zeichnen
+        diceContainer.innerHTML = '';
+        rolls.forEach(val => {
+          const div = document.createElement('div');
+          const rotation = isRolling ? (Math.random() * 20 - 10) : 0;
+          const scaleClass = isRolling ? 'scale-95 text-teal-400 rotate-3' : 'scale-100 text-teal-600';
+          
+          div.className = `w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-2 border-slate-100 font-black text-4xl sm:text-5xl transition-transform duration-75 ${scaleClass}`;
+          div.style.transform = `rotate(${rotation}deg)`;
+          div.innerHTML = renderDiceFace(val, numSides, isRolling);
+          diceContainer.appendChild(div);
+        });
+
+        // Summe anzeigen
+        if (numDice > 1) {
+          sumContainer.classList.remove('hidden');
+          const sum = rolls.reduce((acc, val) => acc + val, 0);
+          totalSumDisplay.textContent = isRolling ? '...' : sum;
+          totalSumDisplay.className = `text-3xl font-bold transition-colors ${isRolling ? 'text-slate-300' : 'text-slate-800'}`;
+        } else {
+          sumContainer.classList.add('hidden');
+        }
+
+        // Header Animation
+        if (isRolling) headerDiceIcon.classList.add('animate-spin-slow');
+        else headerDiceIcon.classList.remove('animate-spin-slow');
+
+        // Button Status
+        rollButton.disabled = isRolling;
+        if (isRolling) {
+          rollButton.classList.replace('bg-teal-600', 'bg-slate-400');
+          rollButton.classList.replace('hover:bg-teal-700', 'cursor-not-allowed');
+          rollButton.classList.add('transform', 'scale-[0.98]');
+          rollIcon.classList.add('animate-spin');
+          rollText.textContent = 'Würfelt...';
+        } else {
+          rollButton.classList.replace('bg-slate-400', 'bg-teal-600');
+          rollButton.classList.replace('cursor-not-allowed', 'hover:bg-teal-700');
+          rollButton.classList.remove('transform', 'scale-[0.98]');
+          rollIcon.classList.remove('animate-spin');
+          rollText.textContent = 'Würfeln';
+        }
+      }
+
+      // Würfeln
+      function roll() {
+        if (isRolling) return;
+        isRolling = true;
+        updateUI();
+
+        const duration = 600;
+        const intervalTime = 50;
+        let elapsed = 0;
+
+        const timer = setInterval(() => {
+          rolls = Array.from({ length: numDice }, () => Math.floor(Math.random() * numSides) + 1);
+          elapsed += intervalTime;
+          updateUI();
+
+          if (elapsed >= duration) {
+            clearInterval(timer);
+            rolls = Array.from({ length: numDice }, () => Math.floor(Math.random() * numSides) + 1);
+            isRolling = false;
+            updateUI();
+          }
+        }, intervalTime);
+      }
+
+      // Event Listener
+      settingsBtn.addEventListener('click', () => { showSettings = !showSettings; updateUI(); });
+      
+      numDiceSelect.addEventListener('change', (e) => {
+        numDice = parseInt(e.target.value);
+        rolls = Array.from({ length: numDice }, () => 1);
+        updateUI();
+      });
+
+      numSidesSelect.addEventListener('change', (e) => {
+        numSides = parseInt(e.target.value);
+        rolls = Array.from({ length: numDice }, () => 1);
+        updateUI();
+      });
+
+      rollButton.addEventListener('click', roll);
+
+      // Start
+      updateUI();
+    </script>
+    
+    <!-- Service Worker Registrierung -->
+    <script>
+      if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(registration => console.log('SW registriert:', registration.scope))
+            .catch(error => console.error('SW Fehler:', error));
+        });
+      }
+    </script>
+  </body>
+</html>

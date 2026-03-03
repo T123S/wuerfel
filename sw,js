@@ -1,0 +1,44 @@
+const CACHE_NAME = 'wuerfel-app-v1';
+
+// Dateien, die für die Offline-Nutzung gespeichert werden sollen
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './dice-icon.svg'
+];
+
+// Installations-Event: Cachen der grundlegenden Assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Cache geöffnet');
+      return cache.addAll(ASSETS);
+    })
+  );
+});
+
+// Fetch-Event: Aus dem Cache laden, wenn offline
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Rückgabe aus dem Cache, falls gefunden, ansonsten Netzwerk-Anfrage
+      return response || fetch(event.request);
+    })
+  );
+});
+
+// Activate-Event: Alte Caches aufräumen
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
